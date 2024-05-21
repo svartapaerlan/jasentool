@@ -96,6 +96,9 @@ class Missing:
                     except IndexError:
                         clarity_group_id = clarity_sample_meta
                     clarity_sample_id = clarity_sample_meta.split("_")[0]
+                    if len(clarity_sample_id) < 4:
+                        clarity_sample_id = sample_id
+                        clarity_group_id = sample_id
                     if ":" in line:
                         parent_dir = os.path.join(
                             line.split(":")[0].rstrip("SampleSheet.csv"),
