@@ -22,7 +22,7 @@ class Database:
     @staticmethod
     def find(collection, query, fields):
         """Find data in mongodb"""
-        return Database.db[collection].find(query, fields)
+        return list(Database.db[collection].find(query, fields))
 
     @staticmethod
     def find_one(collection, query):

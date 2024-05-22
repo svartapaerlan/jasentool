@@ -2,6 +2,7 @@
 
 import os
 import re
+# import pymongo
 
 class Missing:
     """Class for locating expected samples that are missing from a given directory"""
@@ -77,7 +78,7 @@ class Missing:
         return checked_reads
 
     @staticmethod
-    def parse_sample_sheet(sample_sheet, restore_dir):
+    def parse_sample_sheet(sample_sheet, restore_dir, id_seqrun_dict):
         """Parse sample sheets for sample meta data"""
         csv_dict = {}
         seqrun = Missing.get_seqrun_from_filepath(sample_sheet)
@@ -86,6 +87,13 @@ class Missing:
                 if line.endswith("saureus\n"):
                     line = line.rstrip()
                     sample_id = line.split(",")[-1].split("_")[1]
+                    try:
+                        if seqrun != id_seqrun_dict[sample_id]:
+                            #print(f"WARN: The following sample({sample_id}) seqrun ({seqrun}) doesn't match cgviz ({id_seqrun_dict[sample_id]})")
+                            continue
+                    except KeyError:
+                        #print(f"WARN: The following sample({sample_id}) isn't OK'd in cgviz") 
+                        continue
                     species = line.split(",")[-1].split("_")[2]
                     try:
                         clarity_sample_meta = line.split(",")[0].split(":")[1]
@@ -201,6 +209,12 @@ class Missing:
         ):
             print(f"WARN: {fpath} does not exist! Fixing by removing '/fs1' prefix.")
             fpath = fpath.replace("/fs1", "")
+        if (
+            fpath.startswith("/fs2") and
+            not os.path.exists(os.path.join(fpath, "Data/Intensities/BaseCalls"))
+        ):
+            print(f"WARN: {fpath} does not exist! Fixing by removing '/fs2' prefix.")
+            fpath = fpath.replace("/fs2", "")
         if fpath.startswith("NovaSeq"):
             fpath = "/seqdata/" + fpath
             print(f"WARN: {fpath} does not exist! Fixing by adding '/seqdata/' as a prefix.")
@@ -242,24 +256,27 @@ class Missing:
     @staticmethod
     def find_missing(meta_dict, analysis_dir_fnames, restore_dir):
         """Find missing samples from jasen results directory"""
-        sample_run = ""
+        sample_runs = []
         missing_samples = []
         csv_dict = {}
         #print(f"{len(list(meta_dict))} samples found in the meta dictionary")
-        for sample in meta_dict:
+        sorted_meta_dict = sorted(meta_dict, key=lambda x: x["run"], reverse=False)
+        # sorted_meta_dict = meta_dict.sort([("run", pymongo.ASCENDING),("id", pymongo.ASCENDING)])
+        id_seqrun_dict = {sample["id"]: sample["run"].split("/")[-1] for sample in sorted_meta_dict}
+        for sample in sorted_meta_dict:
             if sample["id"] not in analysis_dir_fnames:
                 missing_samples.append(sample["id"])
-                if sample_run != sample["run"]: #if sample run changes based on
+                if sample["run"] not in sample_runs: #if sample run changes based on
                     ss_dict = {}
                     sample_run_dir = Missing.check_format(sample["run"])
                     sample_sheets = Missing.find_files(r'.csv$', sample_run_dir)
                     if sample_sheets:
                         for sample_sheet in sample_sheets:
-                            ss_dict |= Missing.parse_sample_sheet(sample_sheet, restore_dir)
+                            ss_dict |= Missing.parse_sample_sheet(sample_sheet, restore_dir, id_seqrun_dict)
                         csv_dict |= ss_dict
                     else:
                         print(f"WARN: No sample sheets exist in the following path: {sample['run']}!")
-                    sample_run = sample["run"]
+                    sample_runs.append(sample["run"])
 
         print(f"{len(csv_dict.keys())} samples found")
         print(f"{len(missing_samples)} samples missing")
