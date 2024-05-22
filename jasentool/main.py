@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import pprint
+from bson import ObjectId
 
 from jasentool.database import Database
 from jasentool.validate import Validate
@@ -61,6 +62,7 @@ class OptionsParser:
             find = list(Database.find(options.db_collection, {"id": query}, {}))
             if not find:
                 find = list(Database.find(options.db_collection, {"sample_id": query}, {}))
+            find = [{key: str(value) if isinstance(value, ObjectId) else value for key, value in entry.items()} for entry in find]
             sample_pp = pprint.PrettyPrinter(indent=4)
             sample_pp.pprint(find)
             with open(output_fpaths[query_idx], 'w+', encoding="utf-8") as fout:
