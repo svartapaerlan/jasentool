@@ -8,7 +8,7 @@ class Validate:
     """Class to validate old pipeline (cgviz) with new pipeline (jasen)"""
     def get_sample_id(self, results):
         """Get sample ID from mongodb"""
-        return results["sample_id"]
+        return results["run_metadata"]["run"]["sample_name"]
 
     def get_species_name(self, results):
         """Get species name from mongodb"""
