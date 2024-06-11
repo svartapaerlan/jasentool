@@ -1,4 +1,13 @@
 # Jasentool: A mongodb validation tool for comparing pipeline outputs
+## Disclaimer: Jasentool was developed for the integration of [JASEN](https://github.com/Clinical-Genomics-Lund/jasentool) into [Clinical Genomics Lund](https://github.com/Clinical-Genomics-Lund). Jasentool's submethods are used as follows:
+* Mongodb commands: `find`, `insert`, `remove`.
+* Validate: Search old CGL bacterial pipeline database and compare results to JASEN results. 
+* Missing: Search old CGL bacterial pipeline database and find sample results missing from JASEN output dir.
+* Convert: Convert cgmlst.org target loci files to bed files.
+* Converge: Converge tuberculosis mutation catlogues in order to add FoHM and tbdb catalogues to the WHO catalogue.
+* Fix: Fix internal software's (bjorn's) generation of nextflow input csvs.
+* QC: Create post alignment qc output.
+
 ## Dependencies (latest)
 * python=3.11
 * pymongo
