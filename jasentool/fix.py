@@ -14,7 +14,7 @@ class Fix:
         with open(input_file, 'r', encoding="utf-8") as csvfile:
             samples = pd.read_csv(csvfile)
             samples.insert(2, 'sample_name', samples['id'])
-            samples['id'] = samples['id'].str.lower() + "_" + samples['sequencing_run'].str.lower()
+            samples['id'] = samples['clarity_sample_id'].str.lower() + "_" + samples['sequencing_run'].str.lower()
             samples['assay'] = samples['species']
             for assay, df_assay in samples.groupby('assay'):
                 out_fpath = f'{os.path.splitext(output_fpath)[0]}_{assay}.csv'

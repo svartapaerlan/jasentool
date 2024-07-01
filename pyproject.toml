@@ -24,7 +24,9 @@ dependencies = [
     "pandas",
     "pymongo==3.13",
     "openpyxl",
-    "biopython"
+    "biopython",
+    "matplotlib",
+    "seaborn"
 ]
 
 [project.urls]
@@ -41,6 +43,13 @@ dev = [
     "black ~=23.11.0",
     "isort ~=5.12.0",
 ]
+
+[tool.setuptools]
+packages = ["jasentool"]
+include-package-data = true
+
+[tool.setuptools.data-files]
+"notebooks" = ["notebooks/*.ipynb"]
 
 [tool.setuptools.dynamic]
 version = {attr = "jasentool.__version__"}

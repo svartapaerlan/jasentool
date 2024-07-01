@@ -91,15 +91,17 @@ class Validate:
             mlst_at_list = [f'{old_data["mlst_alleles"][gene]},{new_data["mlst_alleles"][gene]}'
                             for gene in sorted(old_data["mlst_alleles"].keys())]
             mlst_at_str = ",".join(mlst_at_list)
-            print(f'{sample_id},{old_data["mlst_seqtype"]},{new_data["mlst_seqtype"]},{mlst_at_str}')
+            return False, f'{sample_id},{old_data["mlst_seqtype"]},{new_data["mlst_seqtype"]},{mlst_at_str}'
         mlst_alleles = self.compare_mlst_alleles(old_data["mlst_alleles"], new_data["mlst_alleles"])
         cgmlst_alleles = self.compare_cgmlst_alleles(old_data["cgmlst_alleles"], new_data["cgmlst_alleles"])
-        return f"{sample_id},{pvl_comp},{mlst_seqtype_comp},{mlst_alleles},{cgmlst_alleles}"
+        return True, f"{sample_id},{pvl_comp},{mlst_seqtype_comp},{mlst_alleles},{cgmlst_alleles}"
 
     def run(self, input_files, output_fpaths, db_collection, combined_output):
         """Execute validation of new pipeline (jasen)"""
         utils = Utils()
         csv_output = "sample_id,pvl,mlst_seqtype,mlst_allele_matches(%),cgmlst_allele_matches(%)"
+        mlst_at_header = "old_arcC,new_arcC,old_aroE,new_aroE,old_glpF,new_glpF,old_gmk,new_gmk,old_pta,new_pta,old_tpi,new_tpi,old_yqiL,new_yqiL"
+        failed_csv_output = f"sample_id,old_mlst_seqtype,new_mlst_allele_matches(%),{mlst_at_header}"
         for input_idx, input_file in enumerate(input_files):
             with open(input_file, 'r', encoding="utf-8") as fin:
                 sample_json = json.load(fin)
@@ -111,11 +113,17 @@ class Validate:
                 if mdb_data_dict:
                     #species_name = self.get_species_name(sample_json)
                     fin_data_dict = self.get_fin_data(sample_json)
-                    compared_data_output = self.compare_data(sample_id, mdb_data_dict, fin_data_dict)
-                    csv_output += "\n" + compared_data_output
+                    passed_val, compared_data_output = self.compare_data(sample_id, mdb_data_dict, fin_data_dict)
+                    if passed_val:
+                        csv_output += "\n" + compared_data_output
+                    else:
+                        failed_csv_output += "\n" + compared_data_output
             if not combined_output:
                 utils.write_out_txt(csv_output, f"{output_fpaths[input_idx]}.csv")
-                csv_output = "pvl,mlst_seqtype,mlst_allele_matches(%),cgmlst_allele_matches(%)\n"
+                utils.write_out_txt(failed_csv_output, f"{output_fpaths[input_idx]}_failed.csv")
+                csv_output = "pvl,mlst_seqtype,mlst_allele_matches(%),cgmlst_allele_matches(%)"
+                failed_csv_output = "pvl,mlst_seqtype,mlst_allele_matches(%),cgmlst_allele_matches(%)"
 
         if combined_output:
-            utils.write_out_txt(csv_output, f"{output_fpaths[0]}.csv", )
+            utils.write_out_txt(csv_output, f"{output_fpaths[0]}.csv")
+            utils.write_out_txt(failed_csv_output, f"{output_fpaths[0]}_failed.csv")
